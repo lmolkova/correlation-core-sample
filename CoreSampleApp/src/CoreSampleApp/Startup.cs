@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Diagnostics.Correlation.AspNetCore.Middleware;
+using Microsoft.Diagnostics.Correlation.Common.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,6 +31,7 @@ namespace CoreSampleApp
         {
             // Add framework services.
             services.AddMvc();
+            services.AddSingleton(CorrelationHttpClientBuilder.CreateClient());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -36,7 +39,7 @@ namespace CoreSampleApp
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
+            app.UseMiddleware<CorrelationContextTracingMiddleware>();
             app.UseMvc();
         }
     }
