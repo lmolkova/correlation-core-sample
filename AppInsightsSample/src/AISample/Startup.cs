@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Diagnostics.Context;
 using Microsoft.Diagnostics.Correlation.AspNetCore;
+using Microsoft.Diagnostics.Correlation.Common.Instrumentation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -39,6 +40,7 @@ namespace AISample
             services.AddApplicationInsightsTelemetry(Configuration);
             services.AddSingleton(new HttpClient());
             services.AddSingleton<ITelemetryInitializer, CorrelationTelemetryInitializer>();
+            services.AddSingleton<IOutgoingRequestNotifier<CorrelationContext, HttpRequestMessage, HttpResponseMessage>>(new OutgoingRequestNotifier());
             services.AddMvc();
         }
 
@@ -48,13 +50,7 @@ namespace AISample
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            var config = new AspNetCoreCorrelationConfiguration
-            {
-                RequestNotifier = new OutgoingRequestNotifier()
-            };
-            var instrumentation = ContextTracingInstrumentation.Enable(config);
-            applicationLifetime.ApplicationStopped.Register(() => { instrumentation?.Dispose(); });
-
+            app.UseCorrelationInstrumentation(Configuration.GetSection("Correlation"));
             app.UseApplicationInsightsRequestTelemetry();
             app.UseApplicationInsightsExceptionTelemetry();
 

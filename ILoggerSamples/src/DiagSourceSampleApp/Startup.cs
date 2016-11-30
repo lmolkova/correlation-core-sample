@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Diagnostics.Context;
+using Microsoft.Diagnostics.Correlation.Common.Instrumentation;
 using Microsoft.Diagnostics.Correlation.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +36,11 @@ namespace DiagSourceSampleApp
             // Add framework services.
             services.AddMvc();
             services.AddSingleton(new HttpClient());
+            services.AddSingleton<IOutgoingRequestNotifier<CorrelationContext, HttpRequestMessage, HttpResponseMessage>>(sp =>
+            {
+                var factory = sp.GetService<ILoggerFactory>();
+                return new OutgoingRequestNotifier(factory.CreateLogger(nameof(OutgoingRequestNotifier)));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -47,18 +54,10 @@ namespace DiagSourceSampleApp
                 .AddDebug()
                 .AddElasicSearch();
 
-            var configuration = new AspNetCoreCorrelationConfiguration(Configuration.GetSection("Correlation"))
-            {
-                RequestNotifier = new OutgoingRequestNotifier(loggerFactory.CreateLogger<OutgoingRequestNotifier>())
-            };
-            var instrumentation = ContextTracingInstrumentation.Enable(configuration);
-            var incomingRequestsHandler = registerIncomingRequestHandler(loggerFactory);
+            app.UseCorrelationInstrumentation(Configuration.GetSection("Correlation"));
 
-            applicationLifetime.ApplicationStopped.Register(() =>
-            {
-                instrumentation?.Dispose();
-                incomingRequestsHandler?.Dispose();
-            });
+            var incomingRequestsHandler = registerIncomingRequestHandler(loggerFactory);
+            applicationLifetime.ApplicationStopped.Register(() => {incomingRequestsHandler?.Dispose();});
             app.UseMvc();
         }
 
