@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net.Http;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
 using Microsoft.Diagnostics.Correlation.Common.Instrumentation;
 
 namespace DiagnosticSourceSample

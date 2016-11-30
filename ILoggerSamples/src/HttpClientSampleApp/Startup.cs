@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Diagnostics.Correlation.AspNetCore.Middleware;
+using Microsoft.Diagnostics.Correlation.AspNetCore;
 using Microsoft.Diagnostics.Correlation.Common.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,7 @@ namespace HttpClientSampleApp
                 var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<LoggingHandler>();
                 return CorrelationHttpClientBuilder.CreateClient(new LoggingHandler(logger));
             });
+            services.AddSingleton(ContextTracingInstrumentation.Enable(Configuration.GetSection("Correlation")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,7 +49,6 @@ namespace HttpClientSampleApp
                 })
                 .AddDebug()
                 .AddElasicSearch();
-            app.UseMiddleware<CorrelationContextTracingMiddleware>();
             app.UseMiddleware<IncomingRequestMiddleware>();
             app.UseMvc();
         }

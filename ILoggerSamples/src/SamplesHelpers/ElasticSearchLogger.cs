@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Internal;
 using Nest;
@@ -42,7 +42,7 @@ namespace SamplesHelpers
             this.categoryName = categoryName;
         }
 
-        private Scope<IDictionary<string,object>> scope = null;
+        private Scope<IDictionary<string,object>> scope;
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             var document = new Dictionary<string,object>
@@ -58,7 +58,7 @@ namespace SamplesHelpers
                 document["Context"] = scope?.State;
             else
             {
-                var ctx = ContextResolver.GetRequestContext<CorrelationContext>();
+                var ctx = ContextResolver.GetContext<CorrelationContext>();
                 if (ctx != null)
                     document["Context"] = ctx;
             }
@@ -90,7 +90,7 @@ namespace SamplesHelpers
 
             public Scope(TState state)
             {
-                this.State = state;
+                State = state;
             }
 
             public void Dispose()

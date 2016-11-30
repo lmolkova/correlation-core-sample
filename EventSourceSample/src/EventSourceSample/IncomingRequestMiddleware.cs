@@ -2,7 +2,7 @@
 using System.Diagnostics.Tracing;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
 
 namespace EventSourceSample
 {
@@ -17,7 +17,7 @@ namespace EventSourceSample
 
         public async Task Invoke(HttpContext context)
         {
-            var ctx = ContextResolver.GetRequestContext<CorrelationContext>();
+            var ctx = ContextResolver.GetContext<CorrelationContext>();
             var relatedActivityId = new Guid(ctx.CorrelationId);
             try
             {

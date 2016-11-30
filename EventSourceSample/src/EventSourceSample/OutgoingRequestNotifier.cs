@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Tracing;
 using System.Net.Http;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
 using Microsoft.Diagnostics.Correlation.Common.Instrumentation;
 
 namespace EventSourceSample

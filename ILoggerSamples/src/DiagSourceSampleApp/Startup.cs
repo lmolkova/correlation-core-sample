@@ -1,8 +1,10 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Diagnostics.Correlation.AspNetCore.Instrumentation;
-using Microsoft.Diagnostics.Correlation.Common.Http;
+using Microsoft.Diagnostics.Correlation.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,7 +37,7 @@ namespace DiagSourceSampleApp
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime)
         {
             loggerFactory.WithFilter(new FilterLoggerSettings
                 {
@@ -45,15 +47,27 @@ namespace DiagSourceSampleApp
                 .AddDebug()
                 .AddElasicSearch();
 
-            var config = new AspNetCoreCorrelationConfiguration
+            var configuration = new AspNetCoreCorrelationConfiguration(Configuration.GetSection("Correlation"))
             {
-                EndpointValidator = new EndpointValidator(new[] { "http://localhost" }, false),
-                RequestNotifier = new OutgoingRequestNotifier(loggerFactory.CreateLogger("OutgoingRequestNotifier"))
+                RequestNotifier = new OutgoingRequestNotifier(loggerFactory.CreateLogger<OutgoingRequestNotifier>())
             };
-            ContextTracingInstrumentation.Enable(config);
+            var instrumentation = ContextTracingInstrumentation.Enable(configuration);
+            var incomingRequestsHandler = registerIncomingRequestHandler(loggerFactory);
 
-            app.UseMiddleware<IncomingRequestMiddleware>();
+            applicationLifetime.ApplicationStopped.Register(() =>
+            {
+                instrumentation?.Dispose();
+                incomingRequestsHandler?.Dispose();
+            });
             app.UseMvc();
+        }
+
+        private IDisposable registerIncomingRequestHandler(ILoggerFactory loggerFactory)
+        {
+            var observers = new Dictionary<string, IObserver<KeyValuePair<string, object>>>
+                    {{"Microsoft.AspNetCore", new AspNetDiagnosticListenerObserver(loggerFactory.CreateLogger<AspNetDiagnosticListenerObserver>())}};
+
+            return DiagnosticListener.AllListeners.Subscribe(new DiagnosticListenersObserver(observers));
         }
     }
 }
