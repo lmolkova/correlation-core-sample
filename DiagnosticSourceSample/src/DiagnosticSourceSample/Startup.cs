@@ -1,8 +1,7 @@
 ﻿using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Diagnostics.Correlation.AspNetCore.Instrumentation;
-using Microsoft.Diagnostics.Correlation.Common.Http;
+using Microsoft.Diagnostics.Correlation.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,18 +31,18 @@ namespace DiagnosticSourceSample
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
             var config = new AspNetCoreCorrelationConfiguration
             {
-                EndpointValidator = new EndpointValidator(new[] { "http://localhost" }, false),
                 RequestNotifier = new OutgoingRequestNotifier()
             };
-            ContextTracingInstrumentation.Enable(config);
-
+            var instrumentation = ContextTracingInstrumentation.Enable(config);
+            applicationLifetime.ApplicationStopped.Register(() => instrumentation?.Dispose());
+            
             app.UseMiddleware<IncomingRequestMiddleware>();
 
             app.UseMvc();

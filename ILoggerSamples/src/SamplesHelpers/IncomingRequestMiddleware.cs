@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Diagnostics.Correlation.Common;
 using Microsoft.Extensions.Logging;
 
 namespace SamplesHelpers

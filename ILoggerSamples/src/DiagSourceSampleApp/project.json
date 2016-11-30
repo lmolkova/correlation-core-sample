@@ -1,4 +1,4 @@
-﻿{
+{
   "dependencies": {
     "Microsoft.NETCore.App": {
       "version": "1.0.1",
@@ -16,7 +16,7 @@
     "Microsoft.Extensions.Logging.Debug": "1.0.0",
     "Microsoft.Extensions.Logging.Filter": "1.1.0",
     "Microsoft.Extensions.Options.ConfigurationExtensions": "1.0.0",
-    "Microsoft.Diagnostics.Correlation.AspNetCore": "1.0.0-preview1",
+    "Microsoft.Diagnostics.Correlation.AspNetCore": "1.0.0-preview2",
     "SamplesHelpers": "1.0.0-*"
   },
 

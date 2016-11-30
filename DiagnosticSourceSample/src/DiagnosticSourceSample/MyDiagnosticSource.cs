@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
 using Microsoft.Diagnostics.Correlation.Common.Http;
 
 namespace DiagnosticSourceSample
@@ -18,7 +18,7 @@ namespace DiagnosticSourceSample
                 context.Request,
                 context.Response,
                 Elapsed = elapsed,
-                Context = ContextResolver.GetRequestContext<CorrelationContext>()
+                Context = ContextResolver.GetContext<CorrelationContext>()
             });
         }
 
@@ -30,16 +30,16 @@ namespace DiagnosticSourceSample
                 context.Response,
                 Elapsed = elapsed,
                 Exception = ex,
-                Context = ContextResolver.GetRequestContext<CorrelationContext>()
+                Context = ContextResolver.GetContext<CorrelationContext>()
             });
         }
 
         public static void LogOutgoigRequest(HttpResponseMessage response, TimeSpan elapsed)
         {
-            var baseRequestContext = ContextResolver.GetRequestContext<CorrelationContext>();
+            var baseRequestContext = ContextResolver.GetContext<CorrelationContext>();
             var childRequestId = response.RequestMessage.GetChildRequestId();
 
-            Log.Write("outgoig_request", new
+            Log.Write("outgoing_request", new
             {
                 Request = response.RequestMessage,
                 Response = response,

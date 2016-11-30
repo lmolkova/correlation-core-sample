@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
 using Microsoft.Diagnostics.Correlation.Common.Http;
 using Microsoft.Extensions.Logging;
 
@@ -33,7 +33,7 @@ namespace SamplesHelpers
 
         public static void LogOutgoingRequest(this ILogger logger, HttpResponseMessage response, TimeSpan elapsed)
         {
-            var baseRequestContext = ContextResolver.GetRequestContext<CorrelationContext>();
+            var baseRequestContext = ContextResolver.GetContext<CorrelationContext>();
             var childRequestId = response.RequestMessage.GetChildRequestId();
             using (logger.BeginScope(baseRequestContext.GetChildRequestContext(childRequestId)))
             {

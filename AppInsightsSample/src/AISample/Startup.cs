@@ -1,11 +1,10 @@
 ﻿using System.Net.Http;
-using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Diagnostics.Correlation.AspNetCore.Instrumentation;
-using Microsoft.Diagnostics.Correlation.Common;
+using Microsoft.Diagnostics.Context;
+using Microsoft.Diagnostics.Correlation.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,7 +43,7 @@ namespace AISample
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -53,10 +52,10 @@ namespace AISample
             {
                 RequestNotifier = new OutgoingRequestNotifier()
             };
-            ContextTracingInstrumentation.Enable(config);
+            var instrumentation = ContextTracingInstrumentation.Enable(config);
+            applicationLifetime.ApplicationStopped.Register(() => { instrumentation?.Dispose(); });
 
             app.UseApplicationInsightsRequestTelemetry();
-
             app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseMvc();
@@ -68,7 +67,7 @@ namespace AISample
         public void Initialize(ITelemetry telemetry)
         {
             //add request id to every event
-            var ctx = ContextResolver.GetRequestContext<CorrelationContext>();
+            var ctx = ContextResolver.GetContext<CorrelationContext>();
             if (ctx != null)
             {
                 telemetry.Context.Operation.Id = ctx.CorrelationId;
