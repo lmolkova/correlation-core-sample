@@ -36,6 +36,7 @@ namespace DiagSourceSampleApp
             // Add framework services.
             services.AddMvc();
             services.AddSingleton(new HttpClient());
+
             services.AddSingleton<IOutgoingRequestNotifier<CorrelationContext, HttpRequestMessage, HttpResponseMessage>>(sp =>
             {
                 var factory = sp.GetService<ILoggerFactory>();

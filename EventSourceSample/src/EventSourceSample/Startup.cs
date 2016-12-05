@@ -30,6 +30,7 @@ namespace EventSourceSample
             // Add framework services.
             services.AddMvc();
             services.AddSingleton(new HttpClient());
+            services.AddRequestNotifier(new OutgoingRequestNotifier());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,13 +38,7 @@ namespace EventSourceSample
         {
             loggerFactory.AddDebug();
 
-            var config = new AspNetCoreCorrelationConfiguration(Configuration.GetSection("Correlation"))
-            {
-                RequestNotifier = new OutgoingRequestNotifier()
-            };
-            var instrumentation = ContextTracingInstrumentation.Enable(config);
-            applicationLifetime.ApplicationStopped.Register(() => instrumentation?.Dispose() );
-
+            app.UseCorrelationInstrumentation(Configuration.GetSection("Correlation"));
             app.UseMiddleware<IncomingRequestMiddleware>();
             app.UseMvc();
         }
